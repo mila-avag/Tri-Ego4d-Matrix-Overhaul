@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permutation Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        #controls {
+            margin-bottom: 1rem;
+        }
+
+        #controls button {
+            margin: 0 0.25rem 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #controls button:hover {
+            background: #ecf0f1;
+        }
+
+        #taskSelect {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        #taskSelect:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        #summaryMatrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        #summaryMatrix th,
+        #summaryMatrix td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        #summaryMatrix th {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+            cursor: default;
+        }
+
+        .summary-cell.done {
+            background-color: #27ae60;
+            color: #fff;
+        }
+
+        .summary-cell:hover {
+            background: #ecf0f1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Permutation Tracker</h1>
+    <div id="controls">
+        <button id="addRoomBtn">Add Room</button>
+        <button id="removeRoomBtn">Remove Room</button>
+        <button id="addWSBtn">Add WS</button>
+        <button id="removeWSBtn">Remove WS</button>
+        <button id="addObjBtn">Add Object</button>
+        <button id="removeObjBtn">Remove Object</button>
+    </div>
+    <select id="taskSelect"></select>
+    <h2>Task Permutation Matrix</h2>
+    <table id="summaryMatrix"></table>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl2EkZ979ZB_xabqXoFFm1Kw_QQfniAkc",
+            authDomain: "triton-ego4d-matrix.firebaseapp.com",
+            databaseURL: "https://triton-ego4d-matrix-default-rtdb.firebaseio.com/",
+            projectId: "triton-ego4d-matrix",
+            storageBucket: "triton-ego4d-matrix.firebasestorage.app",
+            messagingSenderId: "587475554830",
+            appId: "1:587475554830:web:77c69aa312aea86c48e25f",
+            measurementId: "G-ZXP60K67KD"
+        };
+        initializeApp(firebaseConfig);
+        const db = getDatabase();
+
+        // Static tasks list
+        const tasks = [
+            "Put Trash bags into trash bins", "Wipe table", "Close curtain", "Open cabinet", "Open drawer", "Open a drawer mini-matrix"
+            , "Setting a table with utensils and napkins", "Water plant", "Grating cheese or zesting citrus",
+            "Polishing or buffing surfaces with a handheld polisher", "Applying caulking or sealant precisely",
+            "Loading/unloading laundry from dryer/washer", "Turning a ratchet or wrench with torque control",
+            "Operating a barcode scanner", "Pulling inventory bins from shelves",
+            "Grabbing and aligning wooden planks", "Assembling cardboard boxes from flat",
+            "Wipe whiteboard", "Unpack items from grocery bag and put them into fridge",
+            "Toasting food with microwave oven", "Placing dishes into a dishwasher (and adjusting racks)"
+        ];
+
+        // Default config
+        const defaultConfig = {
+            rooms: ["Room 1", "Room 2", "Room 3", "Room 4", "Room 5", "Room 6"],
+            workstations: ["WS 1", "WS 2"],
+            objects: Array.from({ length: 12 }, (_, i) => `Obj ${i + 1}`)
+        };
+
+        // State
+        const tasksConfig = {};
+        const taskSelect = document.getElementById('taskSelect');
+        const summaryTable = document.getElementById('summaryMatrix');
+
+        // Utility
+        function sanitize(str) {
+            return encodeURIComponent(str).replace(/\./g, '_').replace(/%20/g, '_');
+        }
+
+        // Load per-task config and merge missing fields
+        tasks.forEach(name => {
+            const key = sanitize(name);
+            onValue(ref(db, `tasksConfig/${key}`), snap => {
+                const cfg = snap.val() || {};
+                tasksConfig[name] = {
+                    rooms: cfg.rooms || defaultConfig.rooms.slice(),
+                    workstations: cfg.workstations || defaultConfig.workstations.slice(),
+                    objects: cfg.objects || defaultConfig.objects.slice()
+                };
+                // if current task, re-render matrix
+                if (taskSelect.value === name) renderMatrix(name);
+            });
+        });
+
+        // Render dropdown
+        function renderTaskOptions() {
+            taskSelect.innerHTML = '';
+            tasks.forEach(task => {
+                const opt = document.createElement('option');
+                opt.value = task;
+                opt.textContent = task;
+                taskSelect.appendChild(opt);
+            });
+        }
+
+        function renderMatrix(task) {
+            summaryTable.innerHTML = '';
+            const key = sanitize(task);
+            const cfg = tasksConfig[task] || defaultConfig;
+            const rooms = cfg.rooms, workstations = cfg.workstations, objects = cfg.objects;
+
+            // Header
+            const thead = document.createElement('thead');
+            const headRow = document.createElement('tr');
+            headRow.appendChild(document.createElement('th'));
+            objects.forEach(obj => {
+                const th = document.createElement('th');
+                th.textContent = obj;
+                headRow.appendChild(th);
+            });
+            thead.appendChild(headRow);
+            summaryTable.appendChild(thead);
+
+            // Body
+            const tbody = document.createElement('tbody');
+            rooms.forEach(room => {
+                workstations.forEach(ws => {
+                    const row = document.createElement('tr');
+                    const label = document.createElement('th');
+                    label.textContent = `${room} ${ws}`;
+                    row.appendChild(label);
+
+                    objects.forEach(obj => {
+                        const cell = document.createElement('td');
+                        cell.className = 'summary-cell';
+                        row.appendChild(cell);
+                        const permRef = ref(db, `permutations/${key}/${room}/${ws}/${obj}`);
+                        onValue(permRef, snap => cell.classList.toggle('done', snap.val() === true));
+                        cell.addEventListener('click', () => {
+                            const done = cell.classList.contains('done');
+                            if (done && !confirm('Mark this permutation as incomplete?')) return;
+                            set(permRef, !done);
+                        });
+                    });
+
+                    tbody.appendChild(row);
+                });
+            });
+            summaryTable.appendChild(tbody);
+        }
+
+        // Handlers for add/remove
+        document.getElementById('addRoomBtn').onclick = () => {
+            const task = taskSelect.value;
+            const name = prompt('Room name:'); if (!name) return;
+            const cfg = tasksConfig[task]; cfg.rooms.push(name);
+            set(ref(db, `tasksConfig/${sanitize(task)}/rooms`), cfg.rooms);
+        };
+        document.getElementById('removeRoomBtn').onclick = () => {
+            const task = taskSelect.value;
+            const cfg = tasksConfig[task];
+            if (cfg.rooms.length && confirm(`Remove room "${cfg.rooms.slice(-1)[0]}"?`)) {
+                cfg.rooms.pop();
+                set(ref(db, `tasksConfig/${sanitize(task)}/rooms`), cfg.rooms);
+            }
+        };
+
+        document.getElementById('addWSBtn').onclick = () => {
+            const task = taskSelect.value;
+            const name = prompt('Workstation name:'); if (!name) return;
+            const cfg = tasksConfig[task]; cfg.workstations.push(name);
+            set(ref(db, `tasksConfig/${sanitize(task)}/workstations`), cfg.workstations);
+        };
+        document.getElementById('removeWSBtn').onclick = () => {
+            const task = taskSelect.value;
+            const cfg = tasksConfig[task];
+            if (cfg.workstations.length && confirm(`Remove WS "${cfg.workstations.slice(-1)[0]}"?`)) {
+                cfg.workstations.pop();
+                set(ref(db, `tasksConfig/${sanitize(task)}/workstations`), cfg.workstations);
+            }
+        };
+
+        document.getElementById('addObjBtn').onclick = () => {
+            const task = taskSelect.value;
+            const name = prompt('Object label:'); if (!name) return;
+            const cfg = tasksConfig[task]; cfg.objects.push(name);
+            set(ref(db, `tasksConfig/${sanitize(task)}/objects`), cfg.objects);
+        };
+        document.getElementById('removeObjBtn').onclick = () => {
+            const task = taskSelect.value;
+            const cfg = tasksConfig[task];
+            if (cfg.objects.length && confirm(`Remove object "${cfg.objects.slice(-1)[0]}"?`)) {
+                cfg.objects.pop();
+                set(ref(db, `tasksConfig/${sanitize(task)}/objects`), cfg.objects);
+            }
+        };
+
+        // Init
+        renderTaskOptions();
+        taskSelect.onchange = () => renderMatrix(taskSelect.value);
+        // select first task
+        if (tasks.length) taskSelect.value = tasks[0];
+        renderMatrix(tasks[0]);
+    </script>
+</body>
+
+</html>
