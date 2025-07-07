@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permutation Tracker & Schedule Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; background: #f5f7fa; color: #333; }
+    h1, h2 { margin-bottom: 1rem; color: #2c3e50; }
+    #controls { margin-bottom: 1rem; }
+    #controls button { margin: 0 0.25rem 0.5rem; padding: 0.4rem 0.8rem; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; transition: background 0.2s; }
+    #controls button:hover { background: #ecf0f1; }
+    #taskSelect { margin-bottom: 1rem; padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; transition: border-color 0.2s; }
+    #taskSelect:focus { border-color: #3498db; outline: none; }
+    #summaryMatrix { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    #summaryMatrix th, #summaryMatrix td { border: 1px solid #ddd; padding: 8px; text-align: center; cursor: pointer; transition: background 0.2s; user-select: none; }
+    #summaryMatrix th { background-color: #bdc3c7; color: #2c3e50; cursor: default; }
+    .summary-cell.done { background-color: #27ae60; color: #fff; }
+    .summary-cell:hover { background: #ecf0f1; }
+    /* Schedule generator styles */
+    #schedule { margin-top: 2rem; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #schedule div, #schedule label, #schedule input, #schedule button, #schedule select { margin: 0.5rem 0; display: block; }
+    #schedule table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    #schedule th, #schedule td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    .break-row td { text-align: center; font-style: italic; background: #f0e68c; }
+  </style>
+</head>
+
+<body>
+  <h1>Permutation Tracker</h1>
+  <div id="controls">
+    <button id="addRoomBtn">Add Room</button>
+    <button id="removeRoomBtn">Remove Room</button>
+    <button id="addWSBtn">Add WS</button>
+    <button id="removeWSBtn">Remove WS</button>
+    <button id="addObjBtn">Add Object</button>
+    <button id="removeObjBtn">Remove Object</button>
+  </div>
+  <select id="taskSelect"></select>
+  <h2>Task Permutation Matrix</h2>
+  <table id="summaryMatrix"></table>
+
+  <!-- Schedule Generator -->
+  <section id="schedule">
+    <h2>Schedule Generator</h2>
+    <div id="taskHoursList"></div>
+    <button id="addTaskHourBtn">Add Task Hour Entry</button>
+    <div><label for="numPeople">Number of people:</label><input type="number" id="numPeople" min="1" value="1" /></div>
+    <div><label for="sessionsPerDay">Sessions per person per day:</label><input type="number" id="sessionsPerDay" min="1" value="1" /></div>
+    <button id="generateScheduleBtn">Generate Schedule</button>
+    <div id="scheduleOutput"></div>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const fbConf = { apiKey:"AIzaSyDl2EkZ979ZB_xabqXoFFm1Kw_QQfniAkc", authDomain:"triton-ego4d-matrix.firebaseapp.com", databaseURL:"https://triton-ego4d-matrix-default-rtdb.firebaseio.com/", projectId:"triton-ego4d-matrix", storageBucket:"triton-ego4d-matrix.firebasestorage.app", messagingSenderId:"587475554830", appId:"1:587475554830:web:77c69aa312aea86c48e25f", measurementId:"G-ZXP60K67KD" };
+    initializeApp(fbConf); const db = getDatabase();
+
+    const tasks = ["Put Trash bags into trash bins","Wipe table","Close curtain","Open cabinet","Open drawer","Open a drawer mini-matrix","Setting a table with utensils and napkins","Water plant","Grating cheese or zesting citrus","Polishing or buffing surfaces with a handheld polisher","Applying caulking or sealant precisely","Loading/unloading laundry from dryer/washer","Turning a ratchet or wrench with torque control","Operating a barcode scanner","Pulling inventory bins from shelves","Grabbing and aligning wooden planks","Assembling cardboard boxes from flat","Wipe whiteboard","Unpack items from grocery bag and put them into fridge","Toasting food with microwave oven","Placing dishes into a dishwasher (and adjusting racks)"];
+    const defaultConfig = { rooms:["Room 1","Room 2","Room 3","Room 4","Room 5","Room 6"], workstations:["WS 1","WS 2"], objects:Array.from({length:12},(_,i)=>`Obj ${i+1}`) };
+    const tasksConfig = {}, taskSelect = document.getElementById('taskSelect'), summaryTable = document.getElementById('summaryMatrix');
+    const minRec = 35, changeMin = 5;
+
+    function sanitize(s){return encodeURIComponent(s).replace(/\./g,'_').replace(/%20/g,'_');}
+    tasks.forEach(name=>{ const key=sanitize(name); onValue(ref(db,`tasksConfig/${key}`),snap=>{ const c=snap.val()||{}; tasksConfig[name]={rooms:c.rooms||[...defaultConfig.rooms],workstations:c.workstations||[...defaultConfig.workstations],objects:c.objects||[...defaultConfig.objects]}; if(taskSelect.value===name) renderMatrix(name); }); });
+    function renderTaskOptions(){ taskSelect.innerHTML=''; tasks.forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t; taskSelect.appendChild(o); }); }
+    function renderMatrix(task){ summaryTable.innerHTML=''; const key=sanitize(task),cfg=tasksConfig[task]||defaultConfig; const {rooms,workstations,objects}=cfg;
+      const thead=document.createElement('thead'), hr=document.createElement('tr'); hr.appendChild(document.createElement('th')); objects.forEach(o=>{const th=document.createElement('th'); th.textContent=o; hr.appendChild(th);} ); thead.appendChild(hr); summaryTable.appendChild(thead);
+      const tbody=document.createElement('tbody'); rooms.forEach(r=>workstations.forEach(w=>{ const tr=document.createElement('tr'),th=document.createElement('th'); th.textContent=`${r} ${w}`; tr.appendChild(th); objects.forEach(o=>{ const td=document.createElement('td'); td.className='summary-cell'; tr.appendChild(td); const p=ref(db,`permutations/${key}/${r}/${w}/${o}`); onValue(p,snap=>{ const v=snap.val(), done=v!=null?(typeof v==='object'?!!v.done:!!v):false; td.classList.toggle('done',done); td.title=done&&v.lastUpdated?`Last: ${new Date(v.lastUpdated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`:''; }); td.addEventListener('click',()=>{ const d=!td.classList.toggle('done'); set(p,{done:d,lastUpdated:new Date().toISOString()}); }); }); tbody.appendChild(tr);} )); summaryTable.appendChild(tbody); }
+    ['Room','WS','Obj'].forEach(type=>{ const a=document.getElementById(`add${type}Btn`),r=document.getElementById(`remove${type}Btn`); a.onclick=()=>{ const t=taskSelect.value,n=prompt(`${type} name:`); if(!n)return; const cfg=tasksConfig[t],prop=type==='Room'?'rooms':type==='WS'?'workstations':'objects'; cfg[prop].push(n); set(ref(db,`tasksConfig/${sanitize(t)}/${prop}`),cfg[prop]); }; r.onclick=()=>{ const t=taskSelect.value,cfg=tasksConfig[t],prop=type==='Room'?'rooms':type==='WS'?'workstations':'objects'; if(!cfg[prop].length||!confirm(`Remove ${type} "${cfg[prop].slice(-1)[0]}"?`))return; cfg[prop].pop(); set(ref(db,`tasksConfig/${sanitize(t)}/${prop}`),cfg[prop]); }; });
+    renderTaskOptions(); taskSelect.onchange=()=>renderMatrix(taskSelect.value); if(tasks.length){ taskSelect.value=tasks[0]; renderMatrix(tasks[0]); }
+
+    // Schedule
+    const taskList=document.getElementById('taskHoursList'), addE=()=>{ const d=document.createElement('div'); d.className='taskHourEntry'; const s=document.createElement('select'); tasks.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;s.appendChild(o);}); const i=document.createElement('input');i.type='number';i.min=0;i.step=0.1;i.placeholder='Hours'; const b=document.createElement('button');b.textContent='Remove';b.onclick=()=>d.remove(); d.append(s,i,b); taskList.append(d); }; document.getElementById('addTaskHourBtn').onclick=addE; addE();
+    document.getElementById('generateScheduleBtn').onclick=async()=>{
+      const people=+document.getElementById('numPeople').value, sessions=+document.getElementById('sessionsPerDay').value, total=people*sessions;
+      let slots=[];
+      for(const e of document.querySelectorAll('.taskHourEntry')){
+        const t=e.querySelector('select').value, hrs=+e.querySelector('input').value, need=Math.ceil((hrs*60)/minRec);
+        const key=sanitize(t), snap=await get(ref(db,`permutations/${key}`)), data=snap.val()||{};
+        const {rooms,workstations,objects}=tasksConfig[t]||defaultConfig;
+        const combos=[]; rooms.forEach(r=>workstations.forEach(w=>objects.forEach(o=>{ const v=data[r]?.[w]?.[o], done=v!=null?(typeof v==='object'?!!v.done:!!v):false; if(!done) combos.push({r,w,o}); })));
+        if(combos.length<need) return alert(`Not enough for "${t}" (need ${need}, have ${combos.length})`);
+        slots.push(...combos.slice(0,need));
+      }
+      if(slots.length>total) return alert(`Need ${slots.length}, have ${total}`);
+      while(slots.length<total) slots.push(null);
+
+      // Build events
+      const events=[], sessionCount=0;
+      let current=new Date(1970,0,1,9,30), sess=0;
+      while(sess<total){
+        // lunch at 12:00
+        if(current.getHours()===12 && current.getMinutes()===0){ const end=new Date(current.getTime()+30*60000); events.push({time:`${format(current)}-${format(end)}`,break:'Lunch Break'}); current=end; continue; }
+        // short break every 3 sessions
+        if(sess>0 && sess%3===0){ const end=new Date(current.getTime()+10*60000); events.push({time:`${format(current)}-${format(end)}`,break:'Break'}); current=end; continue; }
+        // assign session
+        const rowIdx=sess; const items=slots.splice(0,people);
+        const endRec=new Date(current.getTime()+minRec*60000), endAll=new Date(endRec.getTime()+changeMin*60000);
+        events.push({time:`${format(current)}-${format(endRec)}`,assign:items}); current=endAll;
+        sess++;
+      }
+
+      const out=document.getElementById('scheduleOutput'); out.innerHTML=''; const tbl=document.createElement('table');
+      const header=document.createElement('tr'); ['Time',...Array.from({length:people},(_,i)=>`Person ${i+1}`)].forEach(hd=>{const th=document.createElement('th');th.textContent=hd;header.appendChild(th);}); tbl.appendChild(header);
+      events.forEach(ev=>{ const tr=document.createElement('tr'); if(ev.break){ tr.className='break-row'; const td=document.createElement('td'); td.colSpan=people+1; td.textContent=`${ev.time} ${ev.break}`; tr.appendChild(td); }
+        else{ const tdTime=document.createElement('td'); tdTime.textContent=ev.time; tr.appendChild(tdTime);
+          ev.assign.forEach(a=>{ const td=document.createElement('td'); td.textContent=a?`${a.r} ${a.w} - ${a.o}`:''; tr.appendChild(td); }); }
+        tbl.appendChild(tr);
+      }); out.appendChild(tbl);
+    };
+
+    function format(d){ return d.toTimeString().slice(0,5); }
+  </script>
+</body>
+
+</html>
