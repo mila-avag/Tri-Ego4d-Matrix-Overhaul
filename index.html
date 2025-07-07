@@ -44,7 +44,7 @@
     <h1>Permutation Tracker & Schedule</h1>
     <div class="tabs">
       <div class="tab active" data-target="matrixSection">Matrix</div>
-      <div class="tab"        data-target="scheduleSection">Schedule</div>
+      <div class="tab" data-target="scheduleSection">Schedule</div>
     </div>
 
     <!-- MATRIX -->
@@ -82,7 +82,7 @@
       <div class="form-row">
         <label for="scheduleDate">Schedule Date:</label>
         <input type="date" id="scheduleDate" />
-        <button id="saveScheduleBtn" disabled>Save to Sheet</button>
+        <button id="saveScheduleBtn" disabled> </button>
       </div>
       <div class="form-row">
         <button id="generateScheduleBtn">Generate Schedule</button>
@@ -91,34 +91,10 @@
     </section>
   </div>
 
-  <!-- Load Google APIs -->
-  <script src="https://apis.google.com/js/api.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-    // Google Cloud credentials (filled in)
-    const CLIENT_ID      = '322809086867-468rle687tascmtvrsfas53u2131r5dd.apps.googleusercontent.com';
-    const API_KEY        = 'AIzaSyAIf2l-FbY-0f5Gp-TnM5uY0vdLlm3aeJw';
-    const SPREADSHEET_ID = '1LVN6LITCb5GuUgNN6sr7xvgCa5nf_8xtynr7s9ZjR0A';
-
-    const DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
-    const SCOPES         = 'https://www.googleapis.com/auth/spreadsheets';
-
-    // Initialize Google API client
-    function initGapi() {
-      gapi.load('client:auth2', () => {
-        gapi.client.init({
-          apiKey: API_KEY,
-          clientId: CLIENT_ID,
-          discoveryDocs: DISCOVERY_DOCS,
-          scope: SCOPES
-        });
-      });
-    }
-    window.onload = initGapi;
-
-    // Firebase init
     const firebaseConfig = {
       apiKey: "AIzaSyDl2EkZ979ZB_xabqXoFFm1Kw_QQfniAkc",
       authDomain: "triton-ego4d-matrix.firebaseapp.com",
@@ -131,7 +107,6 @@
     initializeApp(firebaseConfig);
     const db = getDatabase();
 
-    // Static task data
     const tasks = [
       "Put Trash bags into trash bins",
       "Put Trash bags into trash bins mini-matrix",
@@ -156,270 +131,191 @@
       "Toasting food with microwave oven",
       "Placing dishes into a dishwasher"
     ];
+
     const defaultConfig = {
       rooms: ["Room 1","Room 2","Room 3","Room 4","Room 5","Room 6"],
       workstations: ["WS 1","WS 2"],
       objects: Array.from({length:12},(_,i)=>`Obj ${i+1}`)
     };
+    const WS_COUNT = defaultConfig.workstations.length;
     const tasksConfig = {};
-    const sanitize = s => encodeURIComponent(s).replace(/\./g,'_').replace(/%20/g,'_');
-    const fmt = d => d.toTimeString().slice(0,5);
+    const sanitize = s=>encodeURIComponent(s).replace(/\./g,'_').replace(/%20/g,'_');
+    const fmt = d=>d.toTimeString().slice(0,5);
 
-    // Render matrix
-    const taskSelect = document.getElementById('taskSelect');
-    const matrixEl   = document.getElementById('summaryMatrix');
-    tasks.forEach(task=>{
-      onValue(ref(db,`tasksConfig/${sanitize(task)}`),snap=>{
-        const cfg = snap.val()||{};
-        tasksConfig[task] = {
-          rooms: cfg.rooms||[...defaultConfig.rooms],
-          workstations: cfg.workstations||[...defaultConfig.workstations],
-          objects: cfg.objects||[...defaultConfig.objects]
-        };
-        if (taskSelect.value===task) renderMatrix(task);
-        renderRoomAvailability();
-      });
-    });
-    taskSelect.innerHTML = tasks.map(t=>`<option>${t}</option>`).join('');
-    taskSelect.value = tasks[0];
-    taskSelect.onchange = ()=> renderMatrix(taskSelect.value);
+    const taskSelect=document.getElementById('taskSelect');
+    const matrixEl=document.getElementById('summaryMatrix');
 
-    function renderMatrix(task) {
-      const cfg = tasksConfig[task]||defaultConfig;
-      matrixEl.innerHTML = '';
-      const thead = document.createElement('thead');
-      const hr = document.createElement('tr');
+    tasks.forEach(t=>onValue(ref(db,`tasksConfig/${sanitize(t)}`),snap=>{
+      const v=snap.val()||{};
+      tasksConfig[t]={rooms:v.rooms||[...defaultConfig.rooms],workstations:v.workstations||[...defaultConfig.workstations],objects:v.objects||[...defaultConfig.objects]};
+      if(taskSelect.value===t) renderMatrix(t);
+      renderRoomAvailability();
+    }));
+    taskSelect.innerHTML=tasks.map(t=>`<option>${t}</option>`).join('');
+    taskSelect.value=tasks[0];
+    taskSelect.onchange=()=>renderMatrix(taskSelect.value);
+
+    function renderMatrix(task){
+      const cfg=tasksConfig[task]||defaultConfig;
+      matrixEl.innerHTML='';
+      const thead=document.createElement('thead');
+      const hr=document.createElement('tr');
       hr.appendChild(document.createElement('th'));
-      cfg.objects.forEach(o=>{
-        const th = document.createElement('th');
-        th.textContent = o;
-        hr.appendChild(th);
-      });
-      thead.appendChild(hr);
-      matrixEl.appendChild(thead);
+      cfg.objects.forEach(o=>{const th=document.createElement('th'); th.textContent=o; hr.appendChild(th);});
+      thead.appendChild(hr); matrixEl.appendChild(thead);
 
-      const tbody = document.createElement('tbody');
+      const tbody=document.createElement('tbody');
       cfg.rooms.forEach(r=>cfg.workstations.forEach(w=>{
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.textContent = `${r} ${w}`;
-        tr.appendChild(th);
+        const tr=document.createElement('tr');
+        const th=document.createElement('th'); th.textContent=`${r} ${w}`; tr.appendChild(th);
         cfg.objects.forEach(o=>{
-          const td = document.createElement('td');
-          td.className = 'summary-cell';
-          tr.appendChild(td);
-          const pRef = ref(db,`permutations/${sanitize(task)}/${r}/${w}/${o}`);
-          onValue(pRef,snap=>{
-            const v = snap.val();
-            const done = v ? (typeof v==='object'?v.done:v) : false;
-            td.classList.toggle('done',!!done);
-          });
-          td.onclick = ()=> set(pRef,{
-            done: !td.classList.contains('done'),
-            lastUpdated: new Date().toISOString()
-          });
+          const td=document.createElement('td'); td.className='summary-cell'; tr.appendChild(td);
+          const pRef=ref(db,`permutations/${sanitize(task)}/${r}/${w}/${o}`);
+          onValue(pRef,snap=>td.classList.toggle('done',!!(snap.val()&& (snap.val().done??snap.val()))));
+          td.onclick=()=>set(pRef,{done:!td.classList.contains('done'),lastUpdated:(new Date).toISOString()});
         });
         tbody.appendChild(tr);
       }));
       matrixEl.appendChild(tbody);
     }
 
-    // Add/remove config
     ['Room','WS','Obj'].forEach(type=>{
-      document.getElementById(`add${type}Btn`).onclick = ()=>{
-        const name = prompt(`${type} name:`); if(!name) return;
-        const prop = type==='Room' ? 'rooms' : type==='WS' ? 'workstations' : 'objects';
-        const cfg = tasksConfig[taskSelect.value];
-        cfg[prop].push(name);
-        set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${prop}`),cfg[prop]);
+      document.getElementById(`add${type}Btn`).onclick=()=>{
+        const n=prompt(`${type} name:`); if(!n)return;
+        const p=type==='Room'?'rooms':type==='WS'?'workstations':'objects';
+        const cfg=tasksConfig[taskSelect.value]; cfg[p].push(n);
+        set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${p}`),cfg[p]);
       };
-      document.getElementById(`remove${type}Btn`).onclick = ()=>{
-        const prop = type==='Room' ? 'rooms' : type==='WS' ? 'workstations' : 'objects';
-        const cfg = tasksConfig[taskSelect.value];
-        if (!cfg[prop].length) return;
-        if (!confirm(`Remove ${type} "${cfg[prop].at(-1)}"?`)) return;
-        cfg[prop].pop();
-        set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${prop}`),cfg[prop]);
+      document.getElementById(`remove${type}Btn`).onclick=()=>{
+        const p=type==='Room'?'rooms':type==='WS'?'workstations':'objects';
+        const cfg=tasksConfig[taskSelect.value]; if(!cfg[p].length)return;
+        if(!confirm(`Remove ${type} \"${cfg[p].at(-1)}\"?`))return;
+        cfg[p].pop(); set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${p}`),cfg[p]);
       };
     });
 
-    // Room availability
-    const roomAvailWrap = document.getElementById('roomAvailability');
+    const roomAvailWrap=document.getElementById('roomAvailability');
     function renderRoomAvailability(){
-      const allRooms = [...new Set(defaultConfig.rooms.concat(...Object.values(tasksConfig).flatMap(c=>c.rooms||[])))];
-      roomAvailWrap.innerHTML = '';
-      allRooms.forEach(r=>{
-        const id = `room_${r.replace(/\s+/g,'_')}`;
-        const lbl = document.createElement('label');
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.id = id;
-        cb.value = r;
-        cb.checked = true;
-        lbl.append(cb, r);
-        roomAvailWrap.appendChild(lbl);
+      const all=[...new Set(defaultConfig.rooms.concat(...Object.values(tasksConfig).flatMap(c=>c.rooms||[])))];
+      roomAvailWrap.innerHTML='';
+      all.forEach(r=>{
+        const id=`room_${r.replace(/\s+/g,'_')}`;
+        const lbl=document.createElement('label');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.value=r; cb.checked=true;
+        lbl.append(cb,r); roomAvailWrap.appendChild(lbl);
       });
     }
     renderRoomAvailability();
 
-    // Task hours entries
-    const taskHoursList = document.getElementById('taskHoursList');
-    document.getElementById('addTaskHourBtn').onclick = addEntry;
-    addEntry();
+    const taskHoursList=document.getElementById('taskHoursList'); document.getElementById('addTaskHourBtn').onclick=addEntry; addEntry();
     function addEntry(){
-      const div = document.createElement('div');
-      div.className = 'taskHourEntry form-row';
-      const sel = document.createElement('select');
-      tasks.forEach(t=>{const op=document.createElement('option');op.value=t;op.textContent=t;sel.appendChild(op)});
-      const hrs = document.createElement('input');
-      hrs.type = 'number'; hrs.min = 0; hrs.step = 0.1; hrs.placeholder = 'Hours';
-      const objSel = document.createElement('select');
-      objSel.multiple = true; objSel.size = 6;
-      const refresh = ()=>{
-        const cfg = tasksConfig[sel.value]||defaultConfig;
-        objSel.innerHTML = '';
-        cfg.objects.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;objSel.appendChild(op)});
-      };
-      sel.onchange = refresh; refresh();
-      const rm = document.createElement('button');
-      rm.type = 'button'; rm.textContent = 'Remove'; rm.onclick = ()=> div.remove();
-      div.append(sel, hrs, objSel, rm);
-      taskHoursList.appendChild(div);
+      const d=document.createElement('div'); d.className='taskHourEntry form-row';
+      const sel=document.createElement('select'); tasks.forEach(t=>{const op=document.createElement('option'); op.value=t; op.textContent=t; sel.appendChild(op);});
+      const hrs=document.createElement('input'); hrs.type='number'; hrs.min=0; hrs.step=0.1; hrs.placeholder='Hours';
+      const objSel=document.createElement('select'); objSel.multiple=true; objSel.size=6;
+      const refresh=()=>{const cfg=tasksConfig[sel.value]||defaultConfig; objSel.innerHTML=''; cfg.objects.forEach(o=>{const op=document.createElement('option'); op.value=o; op.textContent=o; objSel.appendChild(op);});};
+      sel.onchange=refresh; refresh();
+      const rm=document.createElement('button'); rm.type='button'; rm.textContent='Remove'; rm.onclick=()=>d.remove();
+      d.append(sel,hrs,objSel,rm); taskHoursList.appendChild(d);
     }
 
-    // Schedule generator & save logic
-    const saveBtn     = document.getElementById('saveScheduleBtn');
-    const dateInput   = document.getElementById('scheduleDate');
-    const generateBtn = document.getElementById('generateScheduleBtn');
+    const out=document.getElementById('scheduleOutput');
+    const saveBtn=document.getElementById('saveScheduleBtn');
+    const dateInput=document.getElementById('scheduleDate');
 
-    generateBtn.onclick = async ()=>{
-      const recMin = 35, gapMin = 5, lunchMin = 30, breakMin = 10;
-      const morningQuota = 4, afternoonQuota = 3;
-      const people = parseInt(document.getElementById('numPeople').value,10);
-      const rooms  = [...roomAvailWrap.querySelectorAll('input:checked')].map(cb=>cb.value);
-      if (rooms.length < people){
-        alert(`Need ${people} rooms but only ${rooms.length} selected.`);
-        return;
-      }
-      // Build pending list
-      let pending = [];
-      for (const entry of document.querySelectorAll('.taskHourEntry')) {
-        const task = entry.querySelector('select').value;
-        const hours = parseFloat(entry.querySelector('input').value)||0;
-        if (hours <= 0) continue;
-        const sessionsNeeded = Math.ceil((hours*60)/recMin);
-        const allowedObjs = new Set([...entry.querySelector('select[multiple]').selectedOptions].map(o=>o.value));
-        const cfg = tasksConfig[task]||defaultConfig;
-        const snap = await get(ref(db,`permutations/${sanitize(task)}`));
-        const data = snap.val()||{};
-        const candidates = [];
+    document.getElementById('generateScheduleBtn').onclick=async()=>{
+      const recMin=35,gapMin=5,lunchMin=30,breakMin=10,morningQuota=4,afternoonQuota=3;
+
+      const rooms=[...roomAvailWrap.querySelectorAll('input:checked')].map(cb=>cb.value);
+      if(!rooms.length){alert('Select at least one room');return;}
+      const people=parseInt(document.getElementById('numPeople').value,10);
+      if(people>rooms.length*WS_COUNT){alert('People exceed available WS capacity');return;}
+
+      let pool=[];
+      for(const row of document.querySelectorAll('.taskHourEntry')){
+        const task=row.querySelector('select').value;
+        const hours=parseFloat(row.querySelector('input').value)||0;
+        if(hours<=0)continue;
+        const need=Math.ceil(hours*60/recMin);
+        const allow=new Set([...row.querySelector('select[multiple]').selectedOptions].map(o=>o.value));
+        const cfg=tasksConfig[task]||defaultConfig;
+        const done=(await get(ref(db,`permutations/${sanitize(task)}`))).val()||{};
+        const cand=[];
         cfg.rooms.forEach(r=>cfg.workstations.forEach(w=>cfg.objects.forEach(o=>{
-          if (!allowedObjs.has(o)) return;
-          if (data[r]?.[w]?.[o]?.done) return;
-          candidates.push({task,r,w,o});
+          if(!allow.has(o))return;
+          if(done[r]?.[w]?.[o]?.done)return;
+          cand.push({task,r,w,o});
         })));
-        if (candidates.length < sessionsNeeded){
-          alert(`Not enough unfinished permutations for "${task}"`);
-          return;
-        }
-        shuffle(candidates);
-        pending.push(...candidates.slice(0,sessionsNeeded));
+        if(cand.length<need){alert(`Not enough permutations for "${task}"`);return;}
+        shuffle(cand); pool.push(...cand.slice(0,need));
       }
-      if (!pending.length){
-        alert('Nothing to schedule');
-        return;
-      }
-      shuffle(pending);
+      shuffle(pool);
 
-      const events=[]; let now=new Date(1970,0,1,9,30), sessionsSinceRest=0, morningDone=false;
-      while (pending.length){
-        const slot={}, usedRooms=new Set(), usedObjects=new Set();
-        for (let i=0;i<pending.length && Object.keys(slot).length<people; i++){
-          const p=pending[i];
-          if (!rooms.includes(p.r)||usedRooms.has(p.r)||usedObjects.has(p.o)) continue;
-          slot[p.r]=p; usedRooms.add(p.r); usedObjects.add(p.o);
+      const events=[]; let now=new Date(1970,0,1,9,30),slotCount=0,mDone=false;
+      while(pool.length){
+        const usedObj=new Set(),usedCombo=new Set(),slot={};
+        let idx=0;
+        while(Object.keys(slot).length<people && idx<pool.length){
+          const p=pool[idx]; const combo=`${p.r}::${p.w}`;
+          if(rooms.includes(p.r)&&!usedCombo.has(combo)&&!usedObj.has(p.o)){
+            slot[combo]=p; usedCombo.add(combo); usedObj.add(p.o); pool.splice(idx,1);
+          }else idx++;
         }
-        if (!Object.keys(slot).length){
-          alert('Cannot place remaining permutations.');
-          break;
-        }
-        pending = pending.filter(p=>!(slot[p.r]===p));
-        const endSlot = new Date(now.getTime()+recMin*60000);
-        events.push({time:`${fmt(now)} - ${fmt(endSlot)}`, map: slot});
-        sessionsSinceRest++;
-        let restType='', restDur=0;
-        if (!morningDone && sessionsSinceRest===morningQuota){
-          restType='Lunch'; restDur=lunchMin; morningDone=true; sessionsSinceRest=0;
-        } else if (morningDone && sessionsSinceRest===afternoonQuota){
-          restType='Break'; restDur=breakMin; sessionsSinceRest=0;
-        }
-        if (restType){
-          const restEnd=new Date(endSlot.getTime()+restDur*60000);
-          events.push({time:`${fmt(endSlot)} - ${fmt(restEnd)}`, break: restType});
-          now = restEnd;
-        } else {
-          now = new Date(endSlot.getTime()+gapMin*60000);
-        }
+        if(Object.keys(slot).length<people){alert('Cannot fill a full slot with remaining permutations');break;}
+
+        const end=new Date(now.getTime()+recMin*60000);
+        const byRoom={};
+        Object.values(slot).forEach(e=>{if(!byRoom[e.r])byRoom[e.r]=[];byRoom[e.r].push(e);});
+        events.push({time:`${fmt(now)} - ${fmt(end)}`,map:byRoom});
+        slotCount++;
+
+        let rest='',dur=0;
+        if(!mDone&&slotCount===morningQuota){rest='Lunch';dur=lunchMin;mDone=true;slotCount=0;}
+        else if(mDone&&slotCount===afternoonQuota){rest='Break';dur=breakMin;slotCount=0;}
+        if(rest){
+          const re=new Date(end.getTime()+dur*60000);
+          events.push({time:`${fmt(end)} - ${fmt(re)}`,break:rest});
+          now=re;
+        }else now=new Date(end.getTime()+gapMin*60000);
       }
 
-      // Render table
-      const out = document.getElementById('scheduleOutput');
-      out.innerHTML = '';
-      const tbl = document.createElement('table');
-      const head = tbl.insertRow(); head.insertCell().outerHTML = '<th>Time</th>';
-      rooms.forEach(r=>head.insertCell().outerHTML = `<th>${r}</th>`);
+      out.innerHTML='';
+      const tbl=document.createElement('table');
+      const head=tbl.insertRow(); head.insertCell().outerHTML='<th>Time</th>';
+      rooms.forEach(r=>head.insertCell().outerHTML=`<th>${r}</th>`);
       events.forEach(ev=>{
-        const tr = tbl.insertRow();
-        if (ev.break){
+        const tr=tbl.insertRow();
+        if(ev.break){
           tr.className='break-row';
-          const td=tr.insertCell(); td.colSpan=rooms.length+1; td.textContent=`${ev.time} – ${ev.break}`;
-        } else {
-          tr.insertCell().textContent = ev.time;
+          const td=tr.insertCell(); td.colSpan=1+rooms.length; td.textContent=`${ev.time} – ${ev.break}`;
+        }else{
+          tr.insertCell().textContent=ev.time;
           rooms.forEach(r=>{
             const td=tr.insertCell();
-            if (ev.map[r]) td.textContent = `${ev.map[r].w}: ${ev.map[r].task} - ${ev.map[r].o}`;
+            if(ev.map[r]) td.innerHTML=ev.map[r].map(e=>`${e.w}: ${e.task} - ${e.o}`).join('<br>');
           });
         }
       });
-      out.appendChild(tbl);
-      saveBtn.disabled = false;
+      out.appendChild(tbl); saveBtn.disabled=false;
     };
 
-    saveBtn.onclick = async ()=>{
-      if (!gapi.auth2.getAuthInstance().isSignedIn.get()){
-        await gapi.auth2.getAuthInstance().signIn();
-      }
-      const date = dateInput.value;
-      const table = document.querySelector('#scheduleOutput table');
-      const values = Array.from(table.rows)
-        .map(r=>Array.from(r.cells).map(td=>td.textContent));
-
-      // Create sheet tab
-      await gapi.client.sheets.spreadsheets.batchUpdate({
-        spreadsheetId: SPREADSHEET_ID,
-        resource: { requests: [ { addSheet:{ properties:{ title: date } } } ] }
-      }).catch(e=>{
-        if (e.status!==400) throw e;
-      });
-
-      // Write values
-      await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `${date}!A1`,
-        valueInputOption: 'RAW',
-        resource: { values }
-      });
-
-      alert(`✅ Pushed schedule to sheet tab: ${date}`);
-      saveBtn.disabled = true;
+    saveBtn.onclick=async()=>{
+      const date=dateInput.value;
+      if(!date){alert('Pick a date');return;}
+      const rows=[...out.querySelectorAll('table tr')].map(r=>[...r.cells].map(c=>c.textContent.trim()));
+      await set(ref(db,`schedules/${date}`),rows);
+      alert(`✅ Saved to schedules/${date}`); saveBtn.disabled=true;
     };
 
-    function shuffle(a){
-      for(let i=a.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [a[i],a[j]]=[a[j],a[i]];
-      }
-    }
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+    document.querySelectorAll('.tab').forEach(tab=>
+      tab.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+        tab.classList.add('active'); document.getElementById(tab.dataset.target).classList.add('active');
+      })
+    );
   </script>
 </body>
 </html>
