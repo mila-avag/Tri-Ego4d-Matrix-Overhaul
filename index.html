@@ -70,7 +70,7 @@
   <div class="form-row"><label>Task Entries:</label><div id="taskHoursList" style="flex:1"></div><button id="addTaskHourBtn">+ Entry</button></div>
   <div class="form-row"><label for="numPeople">Number of People:</label><input type="number" id="numPeople" min="1" value="1"/></div>
   <div class="form-row"><label>Available Rooms:</label><div id="roomAvailability"></div></div>
-  <div class="form-row"><label for="scheduleDate">Schedule Date:</label><input type="date" id="scheduleDate"/><button id="saveScheduleBtn" disabled>Save</button></div>
+  <!-- <div class="form-row"><label for="scheduleDate">Schedule Date:</label><input type="date" id="scheduleDate"/><button id="saveScheduleBtn" disabled>Save</button></div> -->
   <div class="form-row"><button id="generateScheduleBtn">Generate Schedule</button></div>
   <div id="scheduleOutput"></div>
 </section>
@@ -232,7 +232,7 @@ function addEntry(){
 }
 
 /* SCHEDULER */
-const out=document.getElementById('scheduleOutput'),saveBtn=document.getElementById('saveScheduleBtn'),dateInput=document.getElementById('scheduleDate');
+// const out=document.getElementById('scheduleOutput'),saveBtn=document.getElementById('saveScheduleBtn'),dateInput=document.getElementById('scheduleDate');
 document.getElementById('generateScheduleBtn').onclick=async()=>{
   const slotMin=35,gapMin=5,rooms=[...roomAvailWrap.querySelectorAll('input:checked')].map(c=>c.value);
   if(!rooms.length)return alert('Select at least one room');
@@ -292,12 +292,6 @@ document.getElementById('generateScheduleBtn').onclick=async()=>{
   out.appendChild(tbl);saveBtn.disabled=false;
 };
 
-/* SAVE */
-saveBtn.onclick=async()=>{
-  const d=dateInput.value;if(!d)return alert('Pick a date first');
-  const rows=[...out.querySelectorAll('table tr')].map(r=>[...r.cells].map(c=>c.textContent.trim()));
-  await set(ref(db,`schedules/${d}`),rows);alert('✅ Saved');saveBtn.disabled=true;
-};
 
 /* HELPERS */
 function shuffle(a){for(let i=a.length-1;i>0;--i){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
