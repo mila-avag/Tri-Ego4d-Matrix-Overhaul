@@ -6,52 +6,55 @@
   <title>Permutation Tracker & Schedule</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{font-family:'Inter',sans-serif;background:#f7fafc}
-    body{color:#2d3748}
-    .container{max-width:1280px;margin:2rem auto;padding:0 1rem}
-    h1{text-align:center;margin-bottom:1.5rem;font-weight:600}
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { font-family:'Inter',sans-serif; background:#f7fafc; }
+    body { color:#2d3748; }
+    .container { max-width:1280px; margin:2rem auto; padding:0 1rem; }
+    h1 { text-align:center; margin-bottom:1.5rem; font-weight:600; }
 
     /* tabs */
-    .tabs{display:flex;border-bottom:2px solid #e2e8f0}
-    .tab{flex:1;text-align:center;padding:.75rem;cursor:pointer;background:#edf2f7}
-    .tab.active{background:#fff;border:2px solid #e2e8f0;border-bottom:none}
+    .tabs { display:flex; border-bottom:2px solid #e2e8f0; }
+    .tab { flex:1; text-align:center; padding:.75rem; cursor:pointer; background:#edf2f7; }
+    .tab.active { background:#fff; border:2px solid #e2e8f0; border-bottom:none; }
 
     /* sections */
-    .section{display:none;background:#fff;border:2px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;padding:1rem}
-    .section.active{display:block}
+    .section { display:none; background:#fff; border:2px solid #e2e8f0; border-top:none; border-radius:0 0 8px 8px; padding:1rem; }
+    .section.active { display:block; }
 
     /* controls */
-    #controls{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
-    #controls button{background:#3182ce;color:#fff;border:none;padding:.5rem 1rem;border-radius:6px;cursor:pointer}
-    #controls button:hover{background:#2c5282}
+    #controls { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+    #controls button { background:#3182ce; color:#fff; border:none; padding:.5rem 1rem; border-radius:6px; cursor:pointer; }
+    #controls button:hover { background:#2c5282; }
 
     /* form rows */
-    .form-row{display:flex;align-items:center;gap:1rem;margin:1rem 0}
-    .form-row label{flex:0 0 180px;font-weight:500}
-    .form-row input[type=number],.form-row select,.form-row button{flex:1;padding:.5rem;border:1px solid #cbd5e0;border-radius:6px}
-
-    /* action btn */
-    #generateScheduleBtn{max-width:200px;background:#38a169;color:#fff;border:none}
-    #generateScheduleBtn:hover{background:#2f855a}
+    .form-row { display:flex; align-items:center; gap:1rem; margin:1rem 0; }
+    .form-row label { flex:0 0 180px; font-weight:500; }
+    .form-row input[type=text],
+    .form-row input[type=number],
+    .form-row select,
+    .form-row button { flex:1; padding:.5rem; border:1px solid #cbd5e0; border-radius:6px; }
 
     /* tables */
-    table{width:100%;border-collapse:collapse;margin-top:1rem}
-    th,td{border:1px solid #e2e8f0;padding:.75rem;text-align:center}
-    th{background:#edf2f7;font-weight:600}
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    th,td { border:1px solid #e2e8f0; padding:.75rem; text-align:center; }
+    th { background:#edf2f7; font-weight:600; }
 
     /* matrix cells */
-    .summary-cell{cursor:pointer}
-    .summary-cell.done{background:#48bb78;color:#fff}
+    .summary-cell { cursor:pointer; }
+    .summary-cell.done { background:#48bb78; color:#fff; }
 
     /* room checkboxes */
-    #roomAvailability{display:flex;flex-wrap:wrap;gap:.5rem}
-    #roomAvailability label{display:flex;align-items:center;gap:.25rem;padding:.25rem .5rem;border:1px solid #cbd5e0;border-radius:6px;background:#edf2f7;cursor:pointer}
-    #roomAvailability input{accent-color:#3182ce}
+    #roomAvailability { display:flex; flex-wrap:wrap; gap:.5rem; }
+    #roomAvailability label { display:flex; align-items:center; gap:.25rem; padding:.25rem .5rem; border:1px solid #cbd5e0; border-radius:6px; background:#edf2f7; cursor:pointer; }
+    #roomAvailability input { accent-color:#3182ce; }
+
+    /* schedule button */
+    #generateScheduleBtn { max-width:200px; background:#38a169; color:#fff; border:none; }
+    #generateScheduleBtn:hover { background:#2f855a; }
 
     @media(max-width:768px){
-      .form-row{flex-direction:column;align-items:stretch}
-      .form-row label{width:100%}
+      .form-row { flex-direction:column; align-items:stretch; }
+      .form-row label { width:100%; }
     }
   </style>
 </head>
@@ -64,23 +67,39 @@
       <div class="tab" data-target="scheduleSection">Schedule</div>
     </div>
 
-    <!-- matrix -->
+    <!-- MATRIX VIEW -->
     <section id="matrixSection" class="section active">
       <div id="controls">
-        <button id="addRoomBtn">+ Room</button><button id="removeRoomBtn">– Room</button>
-        <button id="addWSBtn">+ WS</button><button id="removeWSBtn">– WS</button>
-        <button id="addObjBtn">+ Object</button><button id="removeObjBtn">– Object</button>
-        <button id="addVarBtn">+ Variation</button><button id="removeVarBtn">– Variation</button>
+        <button id="addRoomBtn">+ Room</button>
+        <button id="removeRoomBtn">– Room</button>
+        <button id="addWSBtn">+ WS</button>
+        <button id="removeWSBtn">– WS</button>
+        <button id="addObjBtn">+ Object</button>
+        <button id="removeObjBtn">– Object</button>
+        <button id="addVarBtn">+ Variation</button>
+        <button id="removeVarBtn">– Variation</button>
       </div>
+
+      <div class="form-row">
+        <label for="taskSearch">Search Task:</label>
+        <input type="text" id="taskSearch" placeholder="Type to filter…">
+      </div>
+
       <div class="form-row">
         <label for="taskSelect">Select Task:</label>
         <select id="taskSelect"></select>
       </div>
+
       <table id="summaryMatrix"></table>
     </section>
 
-    <!-- schedule -->
-    <section id="scheduleSection" class="section">
+    <!-- SCHEDULE VIEW -->
+      <section id="scheduleSection" class="section">
+      <div class="form-row">
+        <label for="scheduleSearch">Search Task:</label>
+        <input type="text" id="scheduleSearch" placeholder="Type to filter…">
+      </div>
+
       <div class="form-row">
         <label>Task Entries:</label>
         <div id="taskHoursList" style="flex:1"></div>
@@ -102,261 +121,428 @@
   </div>
 
   <script type="module">
-    /* ---- firebase ---- */
+    // ---- Firebase Setup ----
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-    initializeApp({
-      apiKey:"AIzaSyDl2EkZ979ZB_xabqXoFFm1Kw_QQfniAkc",
-      authDomain:"triton-ego4d-matrix.firebaseapp.com",
-      databaseURL:"https://triton-ego4d-matrix-default-rtdb.firebaseio.com/",
-      projectId:"triton-ego4d-matrix",
-      storageBucket:"triton-ego4d-matrix.firebasestorage.app",
-      messagingSenderId:"587475554830",
-      appId:"1:587475554830:web:77c69aa312aea86c48e25f"
-    });
-    const db=getDatabase();
+    const firebaseConfig = {
+      apiKey: "AIzaSyDl2EkZ979ZB_xabqXoFFm1Kw_QQfniAkc",
+      authDomain: "triton-ego4d-matrix.firebaseapp.com",
+      databaseURL: "https://triton-ego4d-matrix-default-rtdb.firebaseio.com/",
+      projectId: "triton-ego4d-matrix",
+      storageBucket: "triton-ego4d-matrix.appspot.com",
+      messagingSenderId: "587475554830",
+      appId: "1:587475554830:web:77c69aa312aea86c48e25f"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    /* ---- constants ---- */
-    const tasks=[
-      "Put Trash bags into trash bins","Put Trash bags into trash bins mini-matrix",
-      "Wipe table","Close curtain","Open cabinet","Open drawer","Open a drawer mini-matrix",
-      "Setting a table with utensils and napkins","Water plant","Grating cheese or zesting citrus",
-      "Pulling inventory bins from shelves","Assembling cardboard boxes from flat","Wipe whiteboard",
-      "Unpack items from grocery bag and put them into fridge","Toasting food with microwave oven",
-      "Placing dishes into a dishwasher","OTS: Closing & opening curtains",
-      "OTS: Open a can of soda and pour into glass","OTS: Picking up clothes and placing in hamper",
-      "OTS: Plugging in devices for charge","OTS: Making a bed","OTS: Setting up a table",
-      "OTS: Loading dishwasher","OTS: Vacuuming floor + items (couch, etc)","OTS: Cleaning up a messy room",
-      "OTS: Making a smoothie","OTS: Making a salad","OTS: Organize groceries in the fridge",
-      "OTS: Making coffee in espresso machine","OTS: Changing bedsheets",
-      "OTS: Putting away and folding laundry","OTS: Cleaning & organizing the work desk",
-      "OTS: Assemble a bed frame","OTS: Packing for a picnic","OTS: Making cookies",
-      "OTS: Assembling a lamp","OTS: Packing a suitcase for a weekend trip","OTS: Wiping Table",
-      "OTS: Jenga","OTS: Assembling engine model","OTS: Opening bandaids","OTS: Legos", "OTS: Threading a needle",
-      "OTS: Shuffling Cards","OTS: Origami","OTS: Wrapping Gifts",
-      "OTS: Cutting Snowflakes From Paper","OTS: Assembling cardboard boxes","OTS: Shuffling Cards"
+    // ---- Constants & Helpers ----
+    const tasks = [
+      "Put Trash bags into trash bins",
+      "Put Trash bags into trash bins mini-matrix",
+      "Wipe table",
+      "Close curtain",
+      "Open cabinet",
+      "Open drawer",
+      "Open a drawer mini-matrix",
+      "Setting a table with utensils and napkins",
+      "Water plant",
+      "Grating cheese or zesting citrus",
+      "Pulling inventory bins from shelves",
+      "Assembling cardboard boxes from flat",
+      "Wipe whiteboard",
+      "Unpack items from grocery bag and put them into fridge",
+      "Toasting food with microwave oven",
+      "Placing dishes into a dishwasher",
+      "OTS: Closing & opening curtains",
+      "OTS: Open a can of soda and pour into glass",
+      "OTS: Picking up clothes and placing in hamper",
+      "OTS: Plugging in devices for charge",
+      "OTS: Making a bed",
+      "OTS: Setting up a table",
+      "OTS: Loading dishwasher",
+      "OTS: Vacuuming floor + items (couch, etc)",
+      "OTS: Cleaning up a messy room",
+      "OTS: Making a smoothie",
+      "OTS: Making a salad",
+      "OTS: Organize groceries in the fridge",
+      "OTS: Making coffee in espresso machine",
+      "OTS: Changing bedsheets",
+      "OTS: Putting away and folding laundry",
+      "OTS: Cleaning & organizing the work desk",
+      "OTS: Assemble a bed frame",
+      "OTS: Packing for a picnic",
+      "OTS: Making cookies",
+      "OTS: Assembling a lamp",
+      "OTS: Packing a suitcase for a weekend trip",
+      "OTS: Wiping Table",
+      "OTS: Jenga",
+      "OTS: Assembling engine model",
+      "OTS: Opening bandaids",
+      "OTS: Legos",
+      "OTS: Threading a needle",
+      "OTS: Shuffling Cards",
+      "OTS: Origami",
+      "OTS: Wrapping Gifts",
+      "OTS: Cutting Snowflakes From Paper",
+      "OTS: Assembling cardboard boxes",
+      "OTS: Shuffling Cards"
     ];
 
-    const defaultConfig={
-      rooms:["Room 1","Room 2","Room 3","Room 4","Room 5","Room 6"],
-      workstations:["WS 1","WS 2"],
-      objects:Array.from({length:12},(_,i)=>`Obj ${i+1}`),
-      variations:["default"]
+    const defaultConfig = {
+      rooms: ["Room 1","Room 2","Room 3","Room 4","Room 5","Room 6"],
+      workstations: ["WS 1","WS 2"],
+      objects: Array.from({length:12},(_,i)=>`Obj ${i+1}`),
+      variations: ["default"]
     };
-    const WS_COUNT=defaultConfig.workstations.length;
-    const tasksConfig={};
-    const sanitize=s=>encodeURIComponent(s).replace(/\./g,"_").replace(/%20/g,"_");
-    const permRef=(t,v,r,w,o)=>ref(db,`permutations/${sanitize(t)}/${sanitize(v)}/${r}/${w}/${o}`);
-    const legacyPermRef=(t,r,w,o)=>ref(db,`permutations/${sanitize(t)}/${r}/${w}/${o}`);
 
-    /* ---- element refs ---- */
-    const taskSelect=document.getElementById("taskSelect");
-    const matrixEl=document.getElementById("summaryMatrix");
-    const roomAvailWrap=document.getElementById("roomAvailability");
-    const taskHoursList=document.getElementById("taskHoursList");
+    const sanitize = s => encodeURIComponent(s).replace(/\./g,"_").replace(/%20/g,"_");
+    const permRef = (t,v,r,w,o) => ref(db, `permutations/${sanitize(t)}/${sanitize(v)}/${r}/${w}/${o}`);
+    const legacyPermRef = (t,r,w,o) => ref(db, `permutations/${sanitize(t)}/${r}/${w}/${o}`);
 
-    /* ---- sync task configs ---- */
-    tasks.forEach(t=>{
-      onValue(ref(db,`tasksConfig/${sanitize(t)}`),snap=>{
-        const v=snap.val()||{};
-        tasksConfig[t]={
-          rooms:v.rooms||[...defaultConfig.rooms],
-          workstations:v.workstations||[...defaultConfig.workstations],
-          objects:v.objects||[...defaultConfig.objects],
-          variations:v.variations||[...defaultConfig.variations]
+    let tasksConfig = {};
+
+    // ---- Elements ----
+    const taskSearch = document.getElementById("taskSearch");
+    const taskSelect = document.getElementById("taskSelect");
+    const matrixEl = document.getElementById("summaryMatrix");
+    const roomAvailWrap = document.getElementById("roomAvailability");
+    const taskHoursList = document.getElementById("taskHoursList");
+    const addTaskHourBtn = document.getElementById("addTaskHourBtn");
+    const generateScheduleBtn = document.getElementById("generateScheduleBtn");
+    const numPeopleInput = document.getElementById("numPeople");
+    const scheduleOutput = document.getElementById("scheduleOutput");
+
+    // ---- Load Task Configs from Firebase ----
+    tasks.forEach(t => {
+      const path = `tasksConfig/${sanitize(t)}`;
+      onValue(ref(db, path), snap => {
+        const val = snap.val() || {};
+        tasksConfig[t] = {
+          rooms: val.rooms || defaultConfig.rooms.slice(),
+          workstations: val.workstations || defaultConfig.workstations.slice(),
+          objects: val.objects || defaultConfig.objects.slice(),
+          variations: val.variations || defaultConfig.variations.slice()
         };
-        if(taskSelect.value===t)renderMatrix(t);
+        if (taskSelect.value === t) renderMatrix(t);
         renderRoomAvailability();
       });
     });
-    taskSelect.innerHTML=tasks.map(t=>`<option>${t}</option>`).join("");
-    taskSelect.onchange=()=>renderMatrix(taskSelect.value);
 
-    /* ---- render matrix ---- */
-    function renderMatrix(task){
-      const cfg=tasksConfig[task]||defaultConfig;
-      matrixEl.innerHTML="";
-      cfg.variations.forEach(v=>{
-        const wrap=document.createElement("div");wrap.style.marginBottom="1.5rem";
-        wrap.innerHTML=`<h3>Variation: ${v}</h3>`;
-        const tbl=document.createElement("table");
-        const h=tbl.createTHead().insertRow();h.insertCell();
-        cfg.objects.forEach(o=>h.insertCell().textContent=o);
-        const body=tbl.createTBody();
-        cfg.rooms.forEach(r=>cfg.workstations.forEach(w=>{
-          const row=body.insertRow();
-          row.insertCell().outerHTML=`<th>${r} ${w}</th>`;
-          cfg.objects.forEach(o=>{
-            const td=row.insertCell();td.className="summary-cell";
-            const newRef=permRef(task,v,r,w,o);
-            const oldRef=v==="default"?legacyPermRef(task,r,w,o):null;
-            const setDone=s=>td.classList.toggle("done",s.exists()&&((s.val()||{}).done??s.val()));
-            onValue(newRef,setDone);
-            if(oldRef)onValue(oldRef,s=>s.exists()&&setDone(s));
-            td.onclick=()=>set(newRef,{done:!td.classList.contains("done"),lastUpdated:(new Date).toISOString()});
+    // ---- Populate Task Select & Search ----
+    function updateTaskList(filter = "") {
+      const regex = new RegExp(filter, "i");
+      taskSelect.innerHTML = tasks
+        .filter(t => regex.test(t))
+        .map(t => `<option value="${t}">${t}</option>`)
+        .join("");
+      if (!taskSelect.value && taskSelect.options.length) {
+        taskSelect.value = taskSelect.options[0].value;
+      }
+      renderMatrix(taskSelect.value);
+    }
+    taskSearch.addEventListener("input", () => updateTaskList(taskSearch.value));
+    taskSelect.addEventListener("change", () => renderMatrix(taskSelect.value));
+    updateTaskList("");
+
+    // ---- Render Matrix ----
+    function renderMatrix(task) {
+      matrixEl.innerHTML = "";
+      const cfg = tasksConfig[task] || defaultConfig;
+      cfg.variations.forEach(variation => {
+        const section = document.createElement("div");
+        section.style.marginBottom = "1.5rem";
+        const header = document.createElement("h3");
+        header.textContent = `Variation: ${variation}`;
+        section.appendChild(header);
+
+        const tbl = document.createElement("table");
+        const thead = tbl.createTHead();
+        const headRow = thead.insertRow();
+        headRow.insertCell().outerHTML = "<th></th>";
+        cfg.objects.forEach(objName => {
+          const th = document.createElement("th");
+          th.textContent = objName;
+          headRow.appendChild(th);
+        });
+
+        const tbody = tbl.createTBody();
+        cfg.rooms.forEach(room => {
+          cfg.workstations.forEach(ws => {
+            const row = tbody.insertRow();
+            row.insertCell().outerHTML = `<th>${room} ${ws}</th>`;
+            cfg.objects.forEach(objName => {
+              const cell = row.insertCell();
+              cell.className = "summary-cell";
+              const dbRef = permRef(task, variation, room, ws, objName);
+              const oldRef = variation === "default" ? legacyPermRef(task, room, ws, objName) : null;
+              const updateCell = snap => {
+                const done = snap.exists() && ((snap.val().done !== undefined) ? snap.val().done : snap.val());
+                cell.classList.toggle("done", done);
+              };
+              onValue(dbRef, updateCell);
+              if (oldRef) onValue(oldRef, updateCell);
+              cell.onclick = () => {
+                const newDone = !cell.classList.contains("done");
+                set(dbRef, { done: newDone, lastUpdated: new Date().toISOString() });
+              };
+            });
           });
-        }));
-        wrap.appendChild(tbl);matrixEl.appendChild(wrap);
+        });
+
+        section.appendChild(tbl);
+        matrixEl.appendChild(section);
       });
     }
 
-    /* ---- add/remove buttons ---- */
-    ["Room","WS","Obj","Var"].forEach(t=>{
-      document.getElementById(`add${t}Btn`).onclick=()=>{
-        const name=prompt(`${t} name:`);if(!name)return;
-        const cfg=tasksConfig[taskSelect.value];
-        const key={Room:"rooms",WS:"workstations",Obj:"objects",Var:"variations"}[t];
+    // ---- Add/Remove Config Controls ----
+    ["Room","WS","Obj","Var"].forEach(type => {
+      const addBtn = document.getElementById(`add${type}Btn`);
+      const removeBtn = document.getElementById(`remove${type}Btn`);
+      addBtn.addEventListener("click", () => {
+        const name = prompt(`Enter new ${type} name:`);
+        if (!name) return;
+        const cfg = tasksConfig[taskSelect.value];
+        const key = { Room:"rooms", WS:"workstations", Obj:"objects", Var:"variations" }[type];
         cfg[key].push(name);
-        set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${key}`),cfg[key]);
-      };
-      document.getElementById(`remove${t}Btn`).onclick=()=>{
-        const cfg=tasksConfig[taskSelect.value];
-        const key={Room:"rooms",WS:"workstations",Obj:"objects",Var:"variations"}[t];
-        if(!cfg[key].length||!confirm(`Remove ${t} "${cfg[key].at(-1)}"?`))return;
-        cfg[key].pop();
-        set(ref(db,`tasksConfig/${sanitize(taskSelect.value)}/${key}`),cfg[key]);
-      };
+        set(ref(db, `tasksConfig/${sanitize(taskSelect.value)}/${key}`), cfg[key]);
+      });
+      removeBtn.addEventListener("click", () => {
+        const cfg = tasksConfig[taskSelect.value];
+        const key = { Room:"rooms", WS:"workstations", Obj:"objects", Var:"variations" }[type];
+        if (!cfg[key].length) return;
+        if (confirm(`Remove last ${type}: "${cfg[key].slice(-1)[0]}"?`)) {
+          cfg[key].pop();
+          set(ref(db, `tasksConfig/${sanitize(taskSelect.value)}/${key}`), cfg[key]);
+        }
+      });
     });
 
-    /* ---- room checkboxes ---- */
-    function renderRoomAvailability(){
-      const all=[...new Set(defaultConfig.rooms.concat(...Object.values(tasksConfig).flatMap(c=>c.rooms||[])))];
-      roomAvailWrap.innerHTML="";
-      all.forEach(r=>{
-        const lbl=document.createElement("label");
-        const cb=document.createElement("input");
-        cb.type="checkbox";cb.value=r;cb.checked=true;
-        lbl.append(cb,r);roomAvailWrap.appendChild(lbl);
+    // ---- Render Room Availability ----
+    function renderRoomAvailability() {
+      roomAvailWrap.innerHTML = "";
+      const allRooms = Array.from(new Set(defaultConfig.rooms.concat(...Object.values(tasksConfig).flatMap(c => c.rooms))));
+      allRooms.forEach(room => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = room;
+        checkbox.checked = true;
+        label.append(checkbox, room);
+        roomAvailWrap.appendChild(label);
       });
     }
     renderRoomAvailability();
 
-    /* ---- task entry rows ---- */
-    document.getElementById("addTaskHourBtn").onclick=addEntry;addEntry();
-    function addEntry(){
-      const row=document.createElement("div");
-      row.className="taskHourEntry form-row";row.style.flexWrap="wrap";
-      const sel=document.createElement("select");
-      tasks.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;sel.appendChild(o);});
-      const est=document.createElement("input");est.type="number";est.min=0;est.placeholder="Minutes / variation";est.className="estMin";
-      const hrs=document.createElement("input");hrs.type="number";hrs.min=0;hrs.placeholder="Hours goal";hrs.className="hoursTarget";
-      const objSel=document.createElement("select");objSel.multiple=true;objSel.size=6;objSel.className="objSel";
-      const refresh=()=>{const cfg=tasksConfig[sel.value]||defaultConfig;objSel.innerHTML="";cfg.objects.forEach(o=>{const x=document.createElement("option");x.value=o;x.textContent=o;objSel.appendChild(x);});};
-      sel.onchange=refresh;refresh();
-      const rm=document.createElement("button");rm.type="button";rm.textContent="Remove";rm.onclick=()=>row.remove();
-      row.append(sel,est,hrs,objSel,rm);taskHoursList.appendChild(row);
-    }
+    // ---- Task Hour Entries ----
+    function addEntry() {
+      const row = document.createElement("div");
+      row.className = "taskHourEntry form-row";
+      row.style.flexWrap = "wrap";
 
-    /* ---- generate schedule ---- */
-    document.getElementById("generateScheduleBtn").onclick=async()=>{
-      const slotMin=35,gapMin=5;
-      const rooms=[...roomAvailWrap.querySelectorAll("input:checked")].map(c=>c.value);
-      if(!rooms.length){alert("Select at least one room");return;}
-      const people=+document.getElementById("numPeople").value||1;
-      if(people>rooms.length*WS_COUNT){alert("Too many people");return;}
+      const select = document.createElement("select");
+      tasks.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        select.appendChild(opt);
+      });
 
-      let pool=[];
-      for(const row of document.querySelectorAll(".taskHourEntry")){
-        const task=row.querySelector("select").value;
-        const est=+row.querySelector(".estMin").value||0;
-        const hrs=+row.querySelector(".hoursTarget").value||0;
-        if(est<=0||hrs<=0)continue;
-        const cfg=tasksConfig[task]||defaultConfig;
-        const need=Math.ceil((hrs*60)/(est*cfg.variations.length));
-        const allowed=new Set([...row.querySelector(".objSel").selectedOptions].map(o=>o.value));
-        const varMaps={};
-        for(const v of cfg.variations){
-          varMaps[v]=(await get(ref(db,`permutations/${sanitize(task)}/${sanitize(v)}`))).val()||{};
-        }
-        const legacy=(await get(ref(db,`permutations/${sanitize(task)}`))).val()||{};
-        const cand=[];
-        cfg.rooms.forEach(r=>cfg.workstations.forEach(w=>cfg.objects.forEach(o=>{
-          if(allowed.size&&!allowed.has(o))return;
-          let used=false;
-          for(const v of cfg.variations){
-            if(varMaps[v][r]?.[w]?.[o]?.done||(v==="default"&&legacy[r]?.[w]?.[o]?.done)){used=true;break;}
-          }
-          if(!used)cand.push({task,r,w,o});
-        })));
-        if(cand.length<need){alert(`Only ${cand.length} free combos available for "${task}", scheduling those.`);}
-        shuffle(cand);
-        pool.push(...cand.slice(0,Math.min(need,cand.length)));
+      const estInput = document.createElement("input");
+      estInput.type = "number";
+      estInput.min = "0";
+      estInput.placeholder = "Mins/variation";
+      estInput.className = "estMin";
+
+      const hrsInput = document.createElement("input");
+      hrsInput.type = "number";
+      hrsInput.min = "0";
+      hrsInput.placeholder = "Hours goal";
+      hrsInput.className = "hoursTarget";
+
+      const objSel = document.createElement("select");
+      objSel.multiple = true;
+      objSel.size = 6;
+      objSel.className = "objSel";
+      function refreshObjs() {
+        objSel.innerHTML = "";
+        const cfg = tasksConfig[select.value] || defaultConfig;
+        cfg.objects.forEach(o => {
+          const oEl = document.createElement("option");
+          oEl.value = o;
+          oEl.textContent = o;
+          objSel.appendChild(oEl);
+        });
       }
-      if(!pool.length){alert("Nothing to schedule");return;}
+      select.addEventListener("change", refreshObjs);
+      refreshObjs();
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.onclick = () => row.remove();
+
+      row.append(select, estInput, hrsInput, objSel, removeBtn);
+      taskHoursList.appendChild(row);
+    }
+    addTaskHourBtn.addEventListener("click", addEntry);
+    addEntry();
+
+    // ---- Generate Schedule ----
+    generateScheduleBtn.addEventListener("click", async () => {
+      const slotMin = 35, gapMin = 5;
+      const selectedRooms = Array.from(roomAvailWrap.querySelectorAll("input:checked")).map(i => i.value);
+      const peopleCount = +numPeopleInput.value || 1;
+
+      if (!selectedRooms.length) {
+        alert("Select at least one room.");
+        return;
+      }
+      if (peopleCount > selectedRooms.length * defaultConfig.workstations.length) {
+        alert("Too many people for available workstations.");
+        return;
+      }
+
+      let pool = [];
+      for (const row of document.querySelectorAll(".taskHourEntry")) {
+        const task = row.querySelector("select").value;
+        const est = +row.querySelector(".estMin").value || 0;
+        const hrs = +row.querySelector(".hoursTarget").value || 0;
+        if (est <= 0 || hrs <= 0) continue;
+
+        const cfg = tasksConfig[task] || defaultConfig;
+        const need = Math.ceil((hrs * 60) / (est * cfg.variations.length));
+
+        // fetch used permutations
+        const varMaps = {};
+        for (const v of cfg.variations) {
+          varMaps[v] = (await get(ref(db, `permutations/${sanitize(task)}/${sanitize(v)}`))).val() || {};
+        }
+        const legacyMap = (await get(ref(db, `permutations/${sanitize(task)}`))).val() || {};
+
+        // build candidate list
+        const allowedObjs = new Set(Array.from(row.querySelector(".objSel").selectedOptions).map(o => o.value));
+        for (const v of cfg.variations) {
+          for (const r of cfg.rooms) {
+            for (const w of cfg.workstations) {
+              for (const o of cfg.objects) {
+                if (allowedObjs.size && !allowedObjs.has(o)) continue;
+                const used = varMaps[v][r]?.[w]?.[o]?.done || (v === "default" && legacyMap[r]?.[w]?.[o]?.done);
+                if (!used) pool.push({ task, variation: v, r, w, o });
+              }
+            }
+          }
+        }
+
+        if (pool.length < need) {
+          alert(`Only ${pool.length} free combos for "${task}", scheduling what’s available.`);
+        }
+        shuffle(pool);
+        pool = pool.slice(0, need);
+      }
+
+      if (!pool.length) {
+        alert("Nothing to schedule.");
+        return;
+      }
       shuffle(pool);
 
-      /* ---- build time slots (partial allowed) ---- */
-      const events=[];
-      let t=new Date(1970,0,1,9,30);
-      while(pool.length){
-        const slot={},usedObj=new Set(),usedKey=new Set();let i=0;
-        while(Object.keys(slot).length<people&&i<pool.length){
-          const p=pool[i],key=`${p.r}::${p.w}`;
-          if(rooms.includes(p.r)&&!usedKey.has(key)&&!usedObj.has(p.o)){
-            slot[key]=p;usedKey.add(key);usedObj.add(p.o);pool.splice(i,1);
-          }else{i++;}
+      // build timeslots
+      const events = [];
+      let currentTime = new Date(1970,0,1,9,30);
+      while (pool.length) {
+        const slot = {};
+        const usedObjs = new Set();
+        const usedKeys = new Set();
+        let i = 0;
+        while (Object.keys(slot).length < peopleCount && i < pool.length) {
+          const p = pool[i];
+          const key = `${p.r}::${p.w}`;
+          if (selectedRooms.includes(p.r) && !usedKeys.has(key) && !usedObjs.has(p.o)) {
+            slot[key] = p;
+            usedKeys.add(key);
+            usedObjs.add(p.o);
+            pool.splice(i,1);
+          } else {
+            i++;
+          }
         }
-        if(!Object.keys(slot).length)break;
+        if (!Object.keys(slot).length) break;
         events.push(slot);
-        t=new Date(t.getTime()+(slotMin+gapMin)*60000);
+        currentTime = new Date(currentTime.getTime() + (slotMin + gapMin)*60000);
       }
-      if(pool.length)alert(`Could not schedule ${pool.length} remaining permutation(s).`);
+      if (pool.length) {
+        alert(`Could not schedule ${pool.length} remaining permutations.`);
+      }
 
-      /* ---- render schedule ---- */
-      const out=document.getElementById("scheduleOutput");
-      out.innerHTML="";
-      const tbl=document.createElement("table");
-      const head=tbl.insertRow();
-      rooms.forEach(r=>head.insertCell().outerHTML=`<th>${r}</th>`);
-      events.forEach(slot=>{
-        const tr=tbl.insertRow();
-        rooms.forEach(r=>{
-          const td=tr.insertCell();
-          const items=Object.values(slot).filter(e=>e.r===r);
-          if(items.length)td.innerHTML=items.map(e=>`${e.w}: <b>${e.task}</b> – ${e.o}`).join("<br>");
+      // render schedule table
+      scheduleOutput.innerHTML = "";
+      const tbl = document.createElement("table");
+      const headerRow = tbl.insertRow();
+      selectedRooms.forEach(r => {
+        const th = document.createElement("th");
+        th.textContent = r;
+        headerRow.appendChild(th);
+      });
+
+      events.forEach(slot => {
+        const tr = tbl.insertRow();
+        selectedRooms.forEach(r => {
+          const td = tr.insertCell();
+          const tasksInRoom = Object.values(slot).filter(e => e.r === r);
+          td.innerHTML = tasksInRoom.map(e => `${e.w}: <b>${e.task}</b> – ${e.o}`).join("<br>");
         });
       });
-      out.appendChild(tbl);
 
-      /* ---- summary ---- */
-      const estMap={};
-      document.querySelectorAll(".taskHourEntry").forEach(row=>{
-        const task=row.querySelector("select").value;
-        const est=+row.querySelector(".estMin").value||0;
-        estMap[task]=est;
+      scheduleOutput.appendChild(tbl);
+
+      // render summary
+      const estMap = {};
+      document.querySelectorAll(".taskHourEntry").forEach(row => {
+        const t = row.querySelector("select").value;
+        estMap[t] = +row.querySelector(".estMin").value || slotMin;
       });
-      const summary={};
-      events.forEach(slot=>{
-        Object.values(slot).forEach(entry=>{
-          const task=entry.task;
-          const baseMinutes=estMap[task]||slotMin;
-          const variationCount=(tasksConfig[task]?.variations?.length)||defaultConfig.variations.length;
-          summary[task]=(summary[task]||0)+baseMinutes*variationCount;
+
+      const summary = {};
+      events.forEach(slot => {
+        Object.values(slot).forEach(e => {
+          const minutes = estMap[e.task] * (tasksConfig[e.task]?.variations.length || defaultConfig.variations.length);
+          summary[e.task] = (summary[e.task] || 0) + minutes;
         });
       });
-      const summaryDiv=document.createElement("div");
-      summaryDiv.style.marginTop="1rem";
-      summaryDiv.innerHTML=`<h3>Hours Scheduled per Task</h3>`;
-      const ul=document.createElement("ul");
-      Object.entries(summary).forEach(([task,totalMinutes])=>{
-        const li=document.createElement("li");
-        li.textContent=`${task}: ${(totalMinutes/60).toFixed(2)} hours`;
+
+      const summaryDiv = document.createElement("div");
+      summaryDiv.style.marginTop = "1rem";
+      summaryDiv.innerHTML = "<h3>Hours Scheduled per Task</h3>";
+      const ul = document.createElement("ul");
+      Object.entries(summary).forEach(([t,m]) => {
+        const li = document.createElement("li");
+        li.textContent = `${t}: ${(m/60).toFixed(2)} hours`;
         ul.appendChild(li);
       });
       summaryDiv.appendChild(ul);
-      out.appendChild(summaryDiv);
-    };
-
-    /* ---- helpers ---- */
-    function shuffle(a){for(let i=a.length-1;i>0;--i){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
-    document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-      document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-      document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-      t.classList.add("active");
-      document.getElementById(t.dataset.target).classList.add("active");
+      scheduleOutput.appendChild(summaryDiv);
     });
-    renderMatrix(taskSelect.value);
+
+    // ---- Utility: shuffle array ----
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    // ---- Tab switching ----
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.target).classList.add("active");
+      });
+    });
+
   </script>
 </body>
 </html>
